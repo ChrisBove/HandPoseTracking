@@ -67,12 +67,14 @@
 #define BAUD 115200    //The desired baud rate for the serial communication
 #define MUX_ADDR 0x70  //The address of the TCA9548A I2C Multiplexer
 #define NUMSENSORS 2   //The number of sensors connected
-#define CAL TRUE  //Set TRUE or FALSE to calibrate or not.
+#define CAL FALSE  //Set TRUE or FALSE to calibrate or not.
 #define CAL_LVL 3 //Desired calibration level. 3 is best, 1 is lowest level. This is ignored if CAL is FALSE 
 
 /*********** Variable Definitions: ********************************************************************/
 //Declare an IMU object. Only one is needed because the data is saved externally and sensors are multiplexed.
-Adafruit_BNO055 s = Adafruit_BNO055(55, 0x28); //Sensor ID 55 for BNO055 I2C address 0x28
+Adafruit_BNO055 s1 = Adafruit_BNO055(55, 0x28); //Sensor ID 55 for BNO055 I2C address 0x28
+Adafruit_BNO055 s2 = Adafruit_BNO055(55, 0x29); // Sensor ID 55 for second address (can only have 2)
+Adafruit_BNO055 * sensors[2];
 imu::Quaternion quat; //Quaternion variable
 imu::Vector<3> euler; //Euler angle vector calculated from quaternion
 
@@ -90,7 +92,7 @@ char calStr[18]; //Declare an empty string for
 /************** Setup Function ************************************************************************/
 void setup(void)
 {
-  Wire.begin(); //Initialize I2C Interface
+//  Wire.begin(); //Initialize I2C Interface
 
   pinMode(LED, OUTPUT); //Set up the LED to indicate when calibration is finished
   digitalWrite(LED, HIGH); //Turn it off until cal finished.
@@ -118,11 +120,13 @@ void setup(void)
   else {
     Serial.println("startup and init");
   }
+
+  sensors[0] = &s1;
+  sensors[1] = &s2;
   
   // Initialize each sensor
-  for (int i = 1; i <= NUMSENSORS; i++) {
-    sensorSelect(i); //Select sensor 1
-    if (!s.begin())
+  for (int i = 0; i < NUMSENSORS; i++) {
+    if (!sensors[i]->begin())
     {
       // There was a problem detecting the BNO055 ... check your connections
       Serial.print(statError); //If the sensor fails to initialize, send an init error
@@ -135,21 +139,22 @@ void setup(void)
         lcd.print(i);
       }
       else {
-        lcd.print("INIT ERR ");
-        lcd.print("Sensor ");
-        lcd.print(i);
-        lcd.println("Reset System.");
+        Serial.print("INIT ERR ");
+        Serial.print("Sensor ");
+        Serial.print(i);
+        Serial.println("Reset System.");
       }
       while (1); //Do we want MATLAB to trigger a reset here?
     }
     delay(100);
-    s.setExtCrystalUse(true);
+    
+    sensors[0]->setExtCrystalUse(true);
+    sensors[1]->setExtCrystalUse(true);
   }
 
   //**** Wait for successful calibration report on each sensor: ****
-  for (int i = 1; i <= NUMSENSORS; i++) {
-    sensorSelect(i);
-    s.getCalibration(&sys, &gyro, &accel, &mag); //Get current calibration
+  for (int i = 0; i < NUMSENSORS; i++) {
+    sensors[i]->getCalibration(&sys, &gyro, &accel, &mag); //Get current calibration
     //Indicate current sensor
     if(USE_LCD) {
       lcd.setCursor(0, 0);
@@ -162,8 +167,9 @@ void setup(void)
     }
     //While want to calibrate and sensor is still calbrating, wait for system calibration to reach desired level
     while (CAL && (sys < CAL_LVL)) {
+      if(!USE_LCD) Serial.print(i);
       Serial.println(statCal);
-      s.getCalibration(&sys, &gyro, &accel, &mag);
+      sensors[i]->getCalibration(&sys, &gyro, &accel, &mag);
       if(USE_LCD) {
         //Print current calibration status to LCD
         lcd.setCursor(0, 1);
@@ -211,9 +217,8 @@ void loop(void) {
     switch (command) {
 
       case getAll: //Get all sensor readings
-        for (int i = 1; i <= NUMSENSORS; i++) {
-          sensorSelect(i); //Select the i'th sensor
-          quat = s.getQuat(); //get the quaternion orientation
+        for (int i = 0; i < NUMSENSORS; i++) {
+          quat = sensors[i]->getQuat(); //get the quaternion orientation
           euler = quat.toEuler(); //convert it to euler angles
           Serial.print(euler.x()*DEG, 0); //Print the x orientation with zero decimal places. Note that euler is a vector of [z,y,x] euler angles...toEuler function returns z y x euler angles
           Serial.print(' ');
@@ -224,8 +229,7 @@ void loop(void) {
         break;
 
       case get1: //Read sensor 1
-        sensorSelect(1);
-        quat = s.getQuat();
+        quat = sensors[0]->getQuat();
         euler = quat.toEuler();
         Serial.print(euler.x()*DEG, 0); //Print the x orientation with zero decimal places. Note that euler is a vector of [z,y,x] euler angles...toEuler function returns z y x euler angles
         Serial.print(' ');
@@ -235,30 +239,7 @@ void loop(void) {
         break;
 
       case get2: //Read sensor 2
-        sensorSelect(2);
-        quat = s.getQuat();
-        euler = quat.toEuler();
-        Serial.print(euler.x()*DEG, 0); //Print the x orientation with zero decimal places. Note that euler is a vector of [z,y,x] euler angles...toEuler function returns z y x euler angles
-        Serial.print(' ');
-        Serial.print(euler.y()*DEG, 0);
-        Serial.print(' ');
-        Serial.println(euler.z()*DEG, 0);
-        break;
-
-      case get3: //Read sensor 3
-        sensorSelect(3);
-        quat = s.getQuat();
-        euler = quat.toEuler();
-        Serial.print(euler.x()*DEG, 0); //Print the x orientation with zero decimal places. Note that euler is a vector of [z,y,x] euler angles...toEuler function returns z y x euler angles
-        Serial.print(' ');
-        Serial.print(euler.y()*DEG, 0);
-        Serial.print(' ');
-        Serial.println(euler.z()*DEG, 0);
-        break;
-
-      case get4: //Read sensor 4
-        sensorSelect(4);
-        quat = s.getQuat();
+        quat = sensors[1]->getQuat();
         euler = quat.toEuler();
         Serial.print(euler.x()*DEG, 0); //Print the x orientation with zero decimal places. Note that euler is a vector of [z,y,x] euler angles...toEuler function returns z y x euler angles
         Serial.print(' ');
@@ -277,7 +258,7 @@ void loop(void) {
         else {
           Serial.println("Disconnect");
         }
-        digitalWrite(resetPin, LOW);
+        software_Reset();
         break;
 
       default:
@@ -300,3 +281,9 @@ void sensorSelect(uint8_t i) {
   Wire.endTransmission();
 }
 
+/*
+ * from this thread http://forum.arduino.cc/index.php?topic=49581.0
+ */
+void software_Reset() {
+  asm volatile("  jmp 0");
+}
