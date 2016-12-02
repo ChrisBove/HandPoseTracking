@@ -1,3 +1,8 @@
+/*
+ * Modified by RBE 580 Team to work with 2 IMU's on a MEGA
+ * 
+ */
+
 /*******************************************************************************************************
    Arduino interface for RBE 501, Robot Dynamics Hand Pose Estimation Project
    Version 1.7  Last modified by JWilder on 4/21/2016
@@ -92,8 +97,8 @@ void setup(void)
   pinMode(resetPin, OUTPUT);
   //digitalWrite(resetPin, HIGH);
 
-  SerialUSB.begin(BAUD); //Initialize serial communication
-  while (!SerialUSB) ; // Wait for Serial monitor to open
+  Serial.begin(BAUD); //Initialize serial communication
+  while (!Serial) ; // Wait for Serial monitor to open
 
   //*** Set up the LCD: ****
   //Ground the R/W pin:
@@ -114,7 +119,7 @@ void setup(void)
     if (!s.begin())
     {
       // There was a problem detecting the BNO055 ... check your connections
-      SerialUSB.print(statError); //If the sensor fails to initialize, send an init error
+      Serial.print(statError); //If the sensor fails to initialize, send an init error
       //Show error and problem sensor on LCD:
       lcd.setCursor(0, 0);
       lcd.print("INIT ERR");
@@ -137,7 +142,7 @@ void setup(void)
     lcd.print(i);
     //While want to calibrate and sensor is still calbrating, wait for system calibration to reach desired level
     while (CAL && (sys < CAL_LVL)) {
-      SerialUSB.println(statCal);
+      Serial.println(statCal);
       s.getCalibration(&sys, &gyro, &accel, &mag);
       //Print current calibration status to LCD
       lcd.setCursor(0, 1);
@@ -154,7 +159,7 @@ void setup(void)
     }
   }
 
-  SerialUSB.println(statGo); //Tell matlab everything has initialized
+  Serial.println(statGo); //Tell matlab everything has initialized
   digitalWrite(LED, TRUE); //Turn on LED to indicate cal finished.
   lcd.clear();
   lcd.print(" Ready! "); //Show ready on LCD
@@ -163,8 +168,8 @@ void setup(void)
 /**************** Main Loop ***************************************************************************/
 void loop(void) {
 
-  if (SerialUSB.available()) { //Wait for new serial command
-    char  command = (char)SerialUSB.read();
+  if (Serial.available()) { //Wait for new serial command
+    char  command = (char)Serial.read();
 
     switch (command) {
 
@@ -173,11 +178,11 @@ void loop(void) {
           sensorSelect(i); //Select the i'th sensor
           quat = s.getQuat(); //get the quaternion orientation
           euler = quat.toEuler(); //convert it to euler angles
-          SerialUSB.print(euler.x()*DEG, 0); //Print the x orientation with zero decimal places. Note that euler is a vector of [z,y,x] euler angles...toEuler function returns z y x euler angles
-          SerialUSB.print(' ');
-          SerialUSB.print(euler.y()*DEG, 0);
-          SerialUSB.print(' ');
-          SerialUSB.println(euler.z()*DEG, 0);
+          Serial.print(euler.x()*DEG, 0); //Print the x orientation with zero decimal places. Note that euler is a vector of [z,y,x] euler angles...toEuler function returns z y x euler angles
+          Serial.print(' ');
+          Serial.print(euler.y()*DEG, 0);
+          Serial.print(' ');
+          Serial.println(euler.z()*DEG, 0);
         }
         break;
 
@@ -185,44 +190,44 @@ void loop(void) {
         sensorSelect(1);
         quat = s.getQuat();
         euler = quat.toEuler();
-        SerialUSB.print(euler.x()*DEG, 0); //Print the x orientation with zero decimal places. Note that euler is a vector of [z,y,x] euler angles...toEuler function returns z y x euler angles
-        SerialUSB.print(' ');
-        SerialUSB.print(euler.y()*DEG, 0);
-        SerialUSB.print(' ');
-        SerialUSB.println(euler.z()*DEG, 0);
+        Serial.print(euler.x()*DEG, 0); //Print the x orientation with zero decimal places. Note that euler is a vector of [z,y,x] euler angles...toEuler function returns z y x euler angles
+        Serial.print(' ');
+        Serial.print(euler.y()*DEG, 0);
+        Serial.print(' ');
+        Serial.println(euler.z()*DEG, 0);
         break;
 
       case get2: //Read sensor 2
         sensorSelect(2);
         quat = s.getQuat();
         euler = quat.toEuler();
-        SerialUSB.print(euler.x()*DEG, 0); //Print the x orientation with zero decimal places. Note that euler is a vector of [z,y,x] euler angles...toEuler function returns z y x euler angles
-        SerialUSB.print(' ');
-        SerialUSB.print(euler.y()*DEG, 0);
-        SerialUSB.print(' ');
-        SerialUSB.println(euler.z()*DEG, 0);
+        Serial.print(euler.x()*DEG, 0); //Print the x orientation with zero decimal places. Note that euler is a vector of [z,y,x] euler angles...toEuler function returns z y x euler angles
+        Serial.print(' ');
+        Serial.print(euler.y()*DEG, 0);
+        Serial.print(' ');
+        Serial.println(euler.z()*DEG, 0);
         break;
 
       case get3: //Read sensor 3
         sensorSelect(3);
         quat = s.getQuat();
         euler = quat.toEuler();
-        SerialUSB.print(euler.x()*DEG, 0); //Print the x orientation with zero decimal places. Note that euler is a vector of [z,y,x] euler angles...toEuler function returns z y x euler angles
-        SerialUSB.print(' ');
-        SerialUSB.print(euler.y()*DEG, 0);
-        SerialUSB.print(' ');
-        SerialUSB.println(euler.z()*DEG, 0);
+        Serial.print(euler.x()*DEG, 0); //Print the x orientation with zero decimal places. Note that euler is a vector of [z,y,x] euler angles...toEuler function returns z y x euler angles
+        Serial.print(' ');
+        Serial.print(euler.y()*DEG, 0);
+        Serial.print(' ');
+        Serial.println(euler.z()*DEG, 0);
         break;
 
       case get4: //Read sensor 4
         sensorSelect(4);
         quat = s.getQuat();
         euler = quat.toEuler();
-        SerialUSB.print(euler.x()*DEG, 0); //Print the x orientation with zero decimal places. Note that euler is a vector of [z,y,x] euler angles...toEuler function returns z y x euler angles
-        SerialUSB.print(' ');
-        SerialUSB.print(euler.y()*DEG, 0);
-        SerialUSB.print(' ');
-        SerialUSB.println(euler.z()*DEG, 0);
+        Serial.print(euler.x()*DEG, 0); //Print the x orientation with zero decimal places. Note that euler is a vector of [z,y,x] euler angles...toEuler function returns z y x euler angles
+        Serial.print(' ');
+        Serial.print(euler.y()*DEG, 0);
+        Serial.print(' ');
+        Serial.println(euler.z()*DEG, 0);
         break;
 
       case rst: //Reset the system upon command
