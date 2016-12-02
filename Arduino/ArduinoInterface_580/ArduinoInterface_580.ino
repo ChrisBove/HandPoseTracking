@@ -46,6 +46,7 @@
 #define statError "ERR" //Error initializing one or more sensors
 
 //MISC definitions:
+#define USE_LCD false
 #define TRUE 1
 #define FALSE 0
 #define RAD M_PI/180 //Multiply by RAD to convert degrees to radians
@@ -65,7 +66,7 @@
 //Configuration Macros:
 #define BAUD 115200    //The desired baud rate for the serial communication
 #define MUX_ADDR 0x70  //The address of the TCA9548A I2C Multiplexer
-#define NUMSENSORS 4   //The number of sensors connected
+#define NUMSENSORS 2   //The number of sensors connected
 #define CAL TRUE  //Set TRUE or FALSE to calibrate or not.
 #define CAL_LVL 3 //Desired calibration level. 3 is best, 1 is lowest level. This is ignored if CAL is FALSE 
 
@@ -100,19 +101,24 @@ void setup(void)
   Serial.begin(BAUD); //Initialize serial communication
   while (!Serial) ; // Wait for Serial monitor to open
 
-  //*** Set up the LCD: ****
-  //Ground the R/W pin:
-  pinMode(LCD_RW, OUTPUT);
-  digitalWrite(LCD_RW, 0);
-
-  // set up the LCD's number of columns and rows:
-  lcd.begin(LCD_NUMCOLS, LCD_NUMROWS);
-  lcd.clear();
-  // Indicate initialization
-  lcd.print("Startup ");
-  lcd.setCursor(0, 1);
-  lcd.print("and Init");
-
+  if(USE_LCD) {
+    //*** Set up the LCD: ****
+    //Ground the R/W pin:
+    pinMode(LCD_RW, OUTPUT);
+    digitalWrite(LCD_RW, 0);
+    
+    // set up the LCD's number of columns and rows:
+    lcd.begin(LCD_NUMCOLS, LCD_NUMROWS);
+    lcd.clear();
+    // Indicate initialization
+    lcd.print("Startup ");
+    lcd.setCursor(0, 1);
+    lcd.print("and Init");
+  }
+  else {
+    Serial.println("startup and init");
+  }
+  
   // Initialize each sensor
   for (int i = 1; i <= NUMSENSORS; i++) {
     sensorSelect(i); //Select sensor 1
@@ -120,12 +126,20 @@ void setup(void)
     {
       // There was a problem detecting the BNO055 ... check your connections
       Serial.print(statError); //If the sensor fails to initialize, send an init error
-      //Show error and problem sensor on LCD:
-      lcd.setCursor(0, 0);
-      lcd.print("INIT ERR");
-      lcd.setCursor(0, 1);
-      lcd.print("Sensor ");
-      lcd.print(i);
+      if(USE_LCD) {
+        //Show error and problem sensor on LCD:
+        lcd.setCursor(0, 0);
+        lcd.print("INIT ERR");
+        lcd.setCursor(0, 1);
+        lcd.print("Sensor ");
+        lcd.print(i);
+      }
+      else {
+        lcd.print("INIT ERR ");
+        lcd.print("Sensor ");
+        lcd.print(i);
+        lcd.println("Reset System.");
+      }
       while (1); //Do we want MATLAB to trigger a reset here?
     }
     delay(100);
@@ -137,23 +151,41 @@ void setup(void)
     sensorSelect(i);
     s.getCalibration(&sys, &gyro, &accel, &mag); //Get current calibration
     //Indicate current sensor
-    lcd.setCursor(0, 0);
-    lcd.print("Cal IMU");
-    lcd.print(i);
+    if(USE_LCD) {
+      lcd.setCursor(0, 0);
+      lcd.print("Cal IMU");
+      lcd.print(i);
+    }
+    else {
+      Serial.print("Cal IMU ");
+      Serial.println(i);
+    }
     //While want to calibrate and sensor is still calbrating, wait for system calibration to reach desired level
     while (CAL && (sys < CAL_LVL)) {
       Serial.println(statCal);
       s.getCalibration(&sys, &gyro, &accel, &mag);
-      //Print current calibration status to LCD
-      lcd.setCursor(0, 1);
-      lcd.print("S");
-      lcd.print(sys);
-      lcd.print("G");
-      lcd.print(gyro);
-      lcd.print("A");
-      lcd.print(accel);
-      lcd.print("M");
-      lcd.print(mag);
+      if(USE_LCD) {
+        //Print current calibration status to LCD
+        lcd.setCursor(0, 1);
+        lcd.print("S");
+        lcd.print(sys);
+        lcd.print("G");
+        lcd.print(gyro);
+        lcd.print("A");
+        lcd.print(accel);
+        lcd.print("M");
+        lcd.print(mag);
+      }
+      else {
+        Serial.print("S");
+        Serial.print(sys);
+        Serial.print("G");
+        Serial.print(gyro);
+        Serial.print("A");
+        Serial.print(accel);
+        Serial.print("M");
+        Serial.println(mag);
+      }
 
       delay(50); //Give value time to change
     }
@@ -161,8 +193,13 @@ void setup(void)
 
   Serial.println(statGo); //Tell matlab everything has initialized
   digitalWrite(LED, TRUE); //Turn on LED to indicate cal finished.
-  lcd.clear();
-  lcd.print(" Ready! "); //Show ready on LCD
+  if(USE_LCD){
+    lcd.clear();
+    lcd.print(" Ready! "); //Show ready on LCD
+  }
+  else {
+    Serial.println("Ready!!!");
+  }
 }
 
 /**************** Main Loop ***************************************************************************/
@@ -231,10 +268,15 @@ void loop(void) {
         break;
 
       case rst: //Reset the system upon command
-        lcd.clear();
-        lcd.print("Dis-");
-        lcd.setCursor(0, 1);
-        lcd.print("-connect");
+        if(USE_LCD) {
+          lcd.clear();
+          lcd.print("Dis-");
+          lcd.setCursor(0, 1);
+          lcd.print("-connect");
+        }
+        else {
+          Serial.println("Disconnect");
+        }
         digitalWrite(resetPin, LOW);
         break;
 
