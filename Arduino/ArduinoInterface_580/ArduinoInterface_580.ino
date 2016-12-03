@@ -68,7 +68,7 @@
 #define BAUD 115200    //The desired baud rate for the serial communication
 #define MUX_ADDR 0x70  //The address of the TCA9548A I2C Multiplexer
 #define NUMSENSORS 2   //The number of sensors connected
-#define CAL FALSE  //Set TRUE or FALSE to calibrate or not.
+#define CAL TRUE  //Set TRUE or FALSE to calibrate or not.
 #define CAL_LVL 3 //Desired calibration level. 3 is best, 1 is lowest level. This is ignored if CAL is FALSE 
 
 /*********** Variable Definitions: ********************************************************************/
