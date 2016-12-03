@@ -1,5 +1,6 @@
 /*
- * Modified by RBE 580 Team to work with 2 IMU's on a MEGA
+ * Modified by RBE 580 Team to work with 2 IMU's on an Arduino MEGA
+ * See project details at https://github.com/ChrisBove/HandPoseTracking/ for setup and configuration.
  * 
  */
 
