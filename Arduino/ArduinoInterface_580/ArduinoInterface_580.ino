@@ -103,9 +103,6 @@ void setup(void)
   pinMode(resetPin, OUTPUT);
   //digitalWrite(resetPin, HIGH);
 
-  pinMode(mocapPin, INPUT_PULLUP);
-  attachInterrupt(digitalPinToInterrupt(mocapPin), mocapISR, RISING);
-
   Serial.begin(BAUD); //Initialize serial communication
   while (!Serial) ; // Wait for Serial monitor to open
 
@@ -212,6 +209,9 @@ void setup(void)
   else {
     Serial.println("Ready!!!");
   }
+
+  pinMode(mocapPin, INPUT);
+  attachInterrupt(digitalPinToInterrupt(mocapPin), mocapISR, RISING);
 }
 
 /**************** Main Loop ***************************************************************************/
