@@ -224,6 +224,8 @@ void loop(void) {
     if (timeToCapture) {
       timeToCapture = false;
       readByCommand('a');
+      if(timeToCapture) 
+        Serial.println("Missed");
     }
   }
 }
