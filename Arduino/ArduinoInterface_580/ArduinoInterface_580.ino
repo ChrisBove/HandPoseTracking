@@ -63,6 +63,7 @@
 #define LCD_D7 9
 #define LCD_NUMROWS 2
 #define LCD_NUMCOLS 8
+#define mocapPin 3 // pin for attaching interrupt to write data on mocap shutter event
 
 //Configuration Macros:
 #define BAUD 115200    //The desired baud rate for the serial communication
@@ -78,6 +79,7 @@ Adafruit_BNO055 s2 = Adafruit_BNO055(55, 0x29); // Sensor ID 55 for second addre
 Adafruit_BNO055 * sensors[2];
 imu::Quaternion quat; //Quaternion variable
 imu::Vector<3> euler; //Euler angle vector calculated from quaternion
+volatile bool timeToCapture = false; // ISR flag to indicate when new reading should occur
 
 //Calibration values
 uint8_t sys = 0;
@@ -100,6 +102,9 @@ void setup(void)
   digitalWrite(resetPin, HIGH);
   pinMode(resetPin, OUTPUT);
   //digitalWrite(resetPin, HIGH);
+
+  pinMode(mocapPin, INPUT_PULLUP);
+  attachInterrupt(digitalPinToInterrupt(mocapPin), mocapISR, RISING);
 
   Serial.begin(BAUD); //Initialize serial communication
   while (!Serial) ; // Wait for Serial monitor to open
@@ -213,9 +218,23 @@ void setup(void)
 void loop(void) {
 
   if (Serial.available()) { //Wait for new serial command
-    char  command = (char)Serial.read();
+    readByCommand( (char)Serial.read());
+  }
+  else {
+    if (timeToCapture) {
+      timeToCapture = false;
+      readByCommand('a');
+    }
+  }
+}
 
-    switch (command) {
+/************* Functions ******************************************************************************/
+
+/*
+ * Reads sensor based on inputted command and prints sensor quaternion as Euler angles.
+ */
+void readByCommand(char command){
+  switch (command) {
 
       case getAll: //Get all sensor readings
         for (int i = 0; i < NUMSENSORS; i++) {
@@ -265,10 +284,7 @@ void loop(void) {
       default:
         break;
     }
-  }
 }
-
-/************* Functions ******************************************************************************/
 
 /*
    sensorSelect() is used to control the I2C multiplexer to select the current sensor.
@@ -288,3 +304,12 @@ void sensorSelect(uint8_t i) {
 void software_Reset() {
   asm volatile("  jmp 0");
 }
+
+/*
+ * sends euler angles on serial for all sensors.
+ */
+void mocapISR() {
+  digitalWrite(LED, !digitalRead(LED));
+  timeToCapture = true;
+}
+
