@@ -71,6 +71,7 @@
 #define NUMSENSORS 2   //The number of sensors connected
 #define CAL TRUE  //Set TRUE or FALSE to calibrate or not.
 #define CAL_LVL 3 //Desired calibration level. 3 is best, 1 is lowest level. This is ignored if CAL is FALSE 
+#define NUM_DECIMALS 3
 
 /*********** Variable Definitions: ********************************************************************/
 //Declare an IMU object. Only one is needed because the data is saved externally and sensors are multiplexed.
@@ -217,16 +218,16 @@ void setup(void)
 /**************** Main Loop ***************************************************************************/
 void loop(void) {
 
-  if (Serial.available()) { //Wait for new serial command
-    readByCommand( (char)Serial.read());
-  }
-  else {
+//  if (Serial.available()) { //Wait for new serial command
+//    readByCommand( (char)Serial.read());
+//  }
+//  else {
     if (timeToCapture) {
       timeToCapture = false;
       readByCommand('a');
       if(timeToCapture) 
         Serial.println("Missed");
-    }
+//    }
   }
 }
 
@@ -241,33 +242,35 @@ void readByCommand(char command){
       case getAll: //Get all sensor readings
         for (int i = 0; i < NUMSENSORS; i++) {
           quat = sensors[i]->getQuat(); //get the quaternion orientation
-          euler = quat.toEuler(); //convert it to euler angles
-          Serial.print(euler.x()*DEG, 0); //Print the x orientation with zero decimal places. Note that euler is a vector of [z,y,x] euler angles...toEuler function returns z y x euler angles
+//          euler = quat.toEuler(); //convert it to euler angles
+          Serial.print(quat.x(), NUM_DECIMALS); //Print the x orientation with zero decimal places. Note that euler is a vector of [z,y,x] euler angles...toEuler function returns z y x euler angles
           Serial.print(' ');
-          Serial.print(euler.y()*DEG, 0);
+          Serial.print(quat.y(), NUM_DECIMALS);
           Serial.print(' ');
-          Serial.println(euler.z()*DEG, 0);
+          Serial.print(quat.z(), NUM_DECIMALS);
+          Serial.print(' ');
+          Serial.println(quat.w(), NUM_DECIMALS);
         }
         break;
 
       case get1: //Read sensor 1
         quat = sensors[0]->getQuat();
         euler = quat.toEuler();
-        Serial.print(euler.x()*DEG, 0); //Print the x orientation with zero decimal places. Note that euler is a vector of [z,y,x] euler angles...toEuler function returns z y x euler angles
+        Serial.print(euler.x()*DEG, NUM_DECIMALS); //Print the x orientation with zero decimal places. Note that euler is a vector of [z,y,x] euler angles...toEuler function returns z y x euler angles
         Serial.print(' ');
-        Serial.print(euler.y()*DEG, 0);
+        Serial.print(euler.y()*DEG, NUM_DECIMALS);
         Serial.print(' ');
-        Serial.println(euler.z()*DEG, 0);
+        Serial.println(euler.z()*DEG, NUM_DECIMALS);
         break;
 
       case get2: //Read sensor 2
         quat = sensors[1]->getQuat();
         euler = quat.toEuler();
-        Serial.print(euler.x()*DEG, 0); //Print the x orientation with zero decimal places. Note that euler is a vector of [z,y,x] euler angles...toEuler function returns z y x euler angles
+        Serial.print(euler.x()*DEG, NUM_DECIMALS); //Print the x orientation with zero decimal places. Note that euler is a vector of [z,y,x] euler angles...toEuler function returns z y x euler angles
         Serial.print(' ');
-        Serial.print(euler.y()*DEG, 0);
+        Serial.print(euler.y()*DEG, NUM_DECIMALS);
         Serial.print(' ');
-        Serial.println(euler.z()*DEG, 0);
+        Serial.println(euler.z()*DEG, NUM_DECIMALS);
         break;
 
       case rst: //Reset the system upon command
