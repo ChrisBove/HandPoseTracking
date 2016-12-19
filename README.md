@@ -1,5 +1,5 @@
 # HandPoseTracking
-RBE 580 Biomedical Robotics Project for IMU-based Hand Pose Tracking Validation
+RBE 580 Biomedical Robotics Project for IMU-based Hand Pose Tracking Validation. Please read the paper included in this repository for a summary of the approach and findings.
 
 ### Arduino Setup
 
@@ -10,5 +10,4 @@ The most recent code (ArduinoInterface_580) can be compiled on an Arduino Mega o
 To compile last year's code unmodified, change the board type: Tools->Board: -> Arduino Yun
 
 ### Matlab Setup 
-
-TODO
+Run Plane_angles.m on the data obtained from the motion capture system (the cleaned data). Save the results of the workspace. Next, run the imu_analysis.m script using the CSV formatted data from the IMU. This script will produce plots of the joint angles as reported by each system and the error in joint angle between the IMU-reported angle and that of mocap.
